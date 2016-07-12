@@ -34,6 +34,7 @@ package com.angel.sample_app;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -76,6 +77,10 @@ public class HomeActivity extends Activity {
     public ArrayList<Temperature> temperatureList;
     public ArrayList<StepCount> stepCountList;
     public ArrayList<HeartRate> heartRateList;
+    public ArrayList<OpticalWaveform> opticalWaveformList;
+    public ArrayList<AccelerationWaveform> accelerationWaveformList;
+    public ArrayList<AccelerationMagnitude> accelerationMagnitudeList;
+    public Thread mWaveThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +92,9 @@ public class HomeActivity extends Activity {
         temperatureList = new ArrayList<Temperature>();
         stepCountList = new ArrayList<StepCount>();
         heartRateList = new ArrayList<HeartRate>();
+        opticalWaveformList = new ArrayList<OpticalWaveform>();
+        accelerationWaveformList = new ArrayList<AccelerationWaveform>();
+        accelerationMagnitudeList = new ArrayList<AccelerationMagnitude>();
         mContext = this;
 
         mPeriodicReader = new Runnable() {
@@ -95,6 +103,8 @@ public class HomeActivity extends Activity {
                 mBleDevice.readRemoteRssi();
                 if (mChAccelerationEnergyMagnitude != null) {
                     mChAccelerationEnergyMagnitude.readValue(mAccelerationEnergyMagnitudeListener);
+                    mChAccelerationEnergyMagnitude.readValue(mAccelerationEnergyMagnitudeListener);
+
                 }
 
                 mHandler.postDelayed(mPeriodicReader, RSSI_UPDATE_INTERVAL);
@@ -173,6 +183,7 @@ public class HomeActivity extends Activity {
             mBleDevice.registerServiceClass(SrvHealthThermometer.class);
             mBleDevice.registerServiceClass(SrvBattery.class);
             mBleDevice.registerServiceClass(SrvActivityMonitoring.class);
+            mBleDevice.registerServiceClass(SrvWaveformSignal.class);
 
         } catch (NoSuchMethodException e) {
             throw new AssertionError();
@@ -241,9 +252,21 @@ public class HomeActivity extends Activity {
         }
     };
 
+
     private final BleCharacteristic.ValueReadyCallback<ChAccelerationWaveform.AccelerationWaveformValue> mAccelerationWaveformListener = new BleCharacteristic.ValueReadyCallback<ChAccelerationWaveform.AccelerationWaveformValue>() {
         @Override
         public void onValueReady(ChAccelerationWaveform.AccelerationWaveformValue accelerationWaveformValue) {
+            if (accelerationWaveformValue != null && accelerationWaveformValue.wave != null) {
+                for (Integer item : accelerationWaveformValue.wave) {
+                    //grab current time stamp for data logging in file
+                    currentTime = System.currentTimeMillis();
+                    AccelerationWaveform newAccelerationWaveform =
+                            new AccelerationWaveform(currentTime, item);
+                    accelerationWaveformList.add(newAccelerationWaveform);
+                }
+
+            }
+
             if (accelerationWaveformValue != null && accelerationWaveformValue.wave != null && mAccelerationWaveformView != null)
                 for (Integer item : accelerationWaveformValue.wave) {
                     mAccelerationWaveformView.addValue(item);
@@ -259,6 +282,12 @@ public class HomeActivity extends Activity {
                 for (ChOpticalWaveform.OpticalSample item : opticalWaveformValue.wave) {
                     mGreenOpticalWaveformView.addValue(item.green);
                     mBlueOpticalWaveformView.addValue(item.blue);
+
+                    //grab current time stamp for data logging in file
+                    currentTime = System.currentTimeMillis();
+                    OpticalWaveform newOpticalWaveform =
+                            new OpticalWaveform(currentTime, item.green, item.blue);
+                    opticalWaveformList.add(newOpticalWaveform);
                 }
         }
     };
@@ -506,6 +535,9 @@ public class HomeActivity extends Activity {
                 File temperatureFile = new File(mContext.getExternalFilesDir(null), "temperatureData.txt");
                 File stepsFile = new File(mContext.getExternalFilesDir(null), "stepCountFile.txt");
                 File heartFile = new File(mContext.getExternalFilesDir(null), "heartInfoFile.txt");
+                File accelMagFile = new File(mContext.getExternalFilesDir(null), "accelerationMagnitudeFile.txt");
+                File opticalWaveformFile = new File(mContext.getExternalFilesDir(null), "opticalWaveformFile.txt");
+                File accelerationWaveformFile = new File(mContext.getExternalFilesDir(null), "accelerationWaveform.txt");
                 //if the file does not already exist, create it
                 if (!traceFile.exists()){
                     traceFile.createNewFile();
@@ -517,6 +549,9 @@ public class HomeActivity extends Activity {
                 FileWriter temperatureFileWriter = new FileWriter(temperatureFile, true);
                 FileWriter stepCountFileWriter = new FileWriter(stepsFile, true);
                 FileWriter heartFileWriter = new FileWriter(heartFile, true);
+                FileWriter accelMagnitudeFileWriter = new FileWriter(accelMagFile, true);
+                FileWriter opticalFileWriter = new FileWriter(opticalWaveformFile, true);
+                FileWriter accelerationFileWriter = new FileWriter(accelerationWaveformFile, true);
 
                 //plot and save the filtered data
 
@@ -574,10 +609,53 @@ public class HomeActivity extends Activity {
                     }
                 }
 
+                if (accelerationMagnitudeList.size() > 0){
+                    for (int i = 0; i < accelerationMagnitudeList.size(); i++){
+                        AccelerationMagnitude magnitude = accelerationMagnitudeList.get(i);
+                        long currentTime = magnitude.getTimeStamp();
+                        int accelerationMagnitude = magnitude.getAccelerationMag();
+
+                        now = new Date(currentTime);
+                        strDate = sdfDate.format(now);
+                        stepCountFileWriter.write(strDate + ", " + accelerationMagnitude + "\n");
+                        stepCountList.remove(i);
+                    }
+                }
+
+                if (opticalWaveformList.size() > 0){
+                    for (int i = 0; i < opticalWaveformList.size(); i++) {
+                        OpticalWaveform opticalWaveform = opticalWaveformList.get(i);
+                        long currentTime = opticalWaveform.getTimeStamp();
+                        int greenValue = opticalWaveform.getGreenOpticalWaveform();
+                        int blueValue = opticalWaveform.getBlueOpticalWaveform();
+
+                        now = new Date(currentTime);
+                        strDate = sdfDate.format(now);
+                        opticalFileWriter.write(strDate + " ||" + greenValue + "||" + blueValue + "||" + "\n");
+                        opticalWaveformList.remove(i);
+                    }
+                }
+
+                if (accelerationWaveformList.size() > 0){
+                    for (int i = 0; i < accelerationWaveformList.size(); i++) {
+                        AccelerationWaveform accelerationWaveform = accelerationWaveformList.get(i);
+                        long currentTime = accelerationWaveform.getTimeStamp();
+                        int accelerationValue = accelerationWaveform.getAccelerationWaveformValue();
+
+                        now = new Date(currentTime);
+                        strDate = sdfDate.format(now);
+                        opticalFileWriter.write(strDate + " ||" + accelerationValue + "||" + "\n");
+                        opticalWaveformList.remove(i);
+                    }
+                }
+
 
                 temperatureFileWriter.close();
                 stepCountFileWriter.close();
                 heartFileWriter.close();
+                opticalFileWriter.close();
+                accelerationFileWriter.close();
+                accelerationFileWriter.close();
                 angelSensorFileWriter.close(); // close file writer
 
             } catch (Exception e){
