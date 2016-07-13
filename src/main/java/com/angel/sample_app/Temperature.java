@@ -6,6 +6,11 @@ import java.util.GregorianCalendar;
 
 /**
  * Created by Kayci on 7/11/2016.
+ * Used to create a Temperature object that holds the
+ * system timestamp (mCurrentTime), the temperature value,
+ * and the timestamp associated with the measurement (timeStamp)
+ * which is an incredibly long time stamp.
+ * @author: Kayci Parcells
  */
 public class Temperature {
     public float measurementValue;
