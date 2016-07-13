@@ -80,7 +80,6 @@ public class HomeActivity extends Activity {
     public ArrayList<OpticalWaveform> opticalWaveformList;
     public ArrayList<AccelerationWaveform> accelerationWaveformList;
     public ArrayList<AccelerationMagnitude> accelerationMagnitudeList;
-    public Thread mWaveThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,7 +102,6 @@ public class HomeActivity extends Activity {
                 mBleDevice.readRemoteRssi();
                 if (mChAccelerationEnergyMagnitude != null) {
                     mChAccelerationEnergyMagnitude.readValue(mAccelerationEnergyMagnitudeListener);
-                    mChAccelerationEnergyMagnitude.readValue(mAccelerationEnergyMagnitudeListener);
 
                 }
 
@@ -119,6 +117,7 @@ public class HomeActivity extends Activity {
             mAccelerationWaveformView = (GraphView) findViewById(R.id.graph_acceleration);
             mAccelerationWaveformView.setStrokeColor(0xfff7a300);
         }
+
     }
 
     protected void onStart() {
@@ -132,6 +131,20 @@ public class HomeActivity extends Activity {
             connectGraphs(mBleDeviceAddress);
         } else {
             connect(mBleDeviceAddress);
+        }
+
+
+        //if the thread for data plotting and saving has not yet started
+        //or if it has been interrupted by something like a lost BLE connection
+        //restart the thread
+        if(mThread == null) {
+            mThread = new Thread(new DataPlotAndSave());
+            mThread.start();
+        } else if(!mThread.isAlive() || mThread.isInterrupted()){
+            mThread.interrupt();
+            mThread = null;
+            mThread = new Thread(new DataPlotAndSave());
+            mThread.start();
         }
 
     }
@@ -185,6 +198,7 @@ public class HomeActivity extends Activity {
             mBleDevice.registerServiceClass(SrvActivityMonitoring.class);
             mBleDevice.registerServiceClass(SrvWaveformSignal.class);
 
+
         } catch (NoSuchMethodException e) {
             throw new AssertionError();
         } catch (IllegalAccessException e) {
@@ -232,6 +246,8 @@ public class HomeActivity extends Activity {
             device.getService(SrvHealthThermometer.class).getTemperatureMeasurement().enableNotifications(mTemperatureListener);
             device.getService(SrvBattery.class).getBatteryLevel().enableNotifications(mBatteryLevelListener);
             device.getService(SrvActivityMonitoring.class).getStepCount().enableNotifications(mStepCountListener);
+            device.getService(SrvWaveformSignal.class).getAccelerationWaveform().enableNotifications(mAccelerationWaveformListener);
+            device.getService(SrvWaveformSignal.class).getOpticalWaveform().enableNotifications(mOpticalWaveformListener);
             mChAccelerationEnergyMagnitude = device.getService(SrvActivityMonitoring.class).getChAccelerationEnergyMagnitude();
             Assert.assertNotNull(mChAccelerationEnergyMagnitude);
         }
@@ -253,6 +269,8 @@ public class HomeActivity extends Activity {
     };
 
 
+    //This is the Acceleration waveform listener for the horizontal graph view & portrait
+    // file storage
     private final BleCharacteristic.ValueReadyCallback<ChAccelerationWaveform.AccelerationWaveformValue> mAccelerationWaveformListener = new BleCharacteristic.ValueReadyCallback<ChAccelerationWaveform.AccelerationWaveformValue>() {
         @Override
         public void onValueReady(ChAccelerationWaveform.AccelerationWaveformValue accelerationWaveformValue) {
@@ -263,6 +281,7 @@ public class HomeActivity extends Activity {
                     AccelerationWaveform newAccelerationWaveform =
                             new AccelerationWaveform(currentTime, item);
                     accelerationWaveformList.add(newAccelerationWaveform);
+
                 }
 
             }
@@ -275,10 +294,23 @@ public class HomeActivity extends Activity {
         }
     };
 
+
+    // This is the listener used when the phone has a landscape orientation
     private final BleCharacteristic.ValueReadyCallback<ChOpticalWaveform.OpticalWaveformValue> mOpticalWaveformListener = new BleCharacteristic.ValueReadyCallback<ChOpticalWaveform.OpticalWaveformValue>() {
         @Override
         public void onValueReady(ChOpticalWaveform.OpticalWaveformValue opticalWaveformValue) {
-            if (opticalWaveformValue != null && opticalWaveformValue.wave != null)
+            if (opticalWaveformValue != null && opticalWaveformValue.wave != null) {
+                // for saving to file in portrait orientation
+                for (ChOpticalWaveform.OpticalSample item : opticalWaveformValue.wave) {
+                    //grab current time stamp for data logging in file
+                    currentTime = System.currentTimeMillis();
+                    OpticalWaveform newOpticalWaveform =
+                            new OpticalWaveform(currentTime, item.green, item.blue);
+                    opticalWaveformList.add(newOpticalWaveform);
+                }
+            }
+            // for making graphs & saving to file in landscape orientation
+            if (opticalWaveformValue != null && opticalWaveformValue.wave != null && orientation == Configuration.ORIENTATION_LANDSCAPE){
                 for (ChOpticalWaveform.OpticalSample item : opticalWaveformValue.wave) {
                     mGreenOpticalWaveformView.addValue(item.green);
                     mBlueOpticalWaveformView.addValue(item.blue);
@@ -289,8 +321,11 @@ public class HomeActivity extends Activity {
                             new OpticalWaveform(currentTime, item.green, item.blue);
                     opticalWaveformList.add(newOpticalWaveform);
                 }
+            }
         }
     };
+
+
 
     private final BleCharacteristic.ValueReadyCallback<ChHeartRateMeasurement.HeartRateMeasurementValue> mHeartRateListener = new BleCharacteristic.ValueReadyCallback<ChHeartRateMeasurement.HeartRateMeasurementValue>() {
         @Override
@@ -314,7 +349,6 @@ public class HomeActivity extends Activity {
 
     private final BleCharacteristic.ValueReadyCallback<ChTemperatureMeasurement.TemperatureMeasurementValue> mTemperatureListener =
         new BleCharacteristic.ValueReadyCallback<ChTemperatureMeasurement.TemperatureMeasurementValue>() {
-            ArrayList<Temperature> Temperature = new ArrayList<Temperature>();
 
             @Override
             public void onValueReady(final ChTemperatureMeasurement.TemperatureMeasurementValue temperature) {
@@ -323,8 +357,6 @@ public class HomeActivity extends Activity {
                 currentTime = System.currentTimeMillis();
                 Temperature newTempValue = new Temperature(currentTime, temperature.getTemperatureMeasurement(), temperature.getTimeStamp());
                 temperatureList.add(newTempValue);
-                Toast toast = Toast.makeText(mContext, "added to list?", Toast.LENGTH_SHORT);
-                toast.show();
 
                 //if the thread for data plotting and saving has not yet started
                 //or if it has been interrupted by something like a lost BLE connection
@@ -338,6 +370,7 @@ public class HomeActivity extends Activity {
                     mThread = new Thread(new DataPlotAndSave());
                     mThread.run();
                 }
+
             }
         };
 
@@ -423,6 +456,7 @@ public class HomeActivity extends Activity {
         effect.setRepeatCount(1);
         View thermometerTop = findViewById(R.id.imageview_thermometer_top);
         thermometerTop.startAnimation(effect);
+
     }
 
 
@@ -489,6 +523,7 @@ public class HomeActivity extends Activity {
     private GraphView mAccelerationWaveformView, mBlueOpticalWaveformView, mGreenOpticalWaveformView;
 
     private BleDevice mBleDevice;
+    private BleDevice mBleGraphDevice;
     private String mBleDeviceAddress;
 
     private Handler mHandler;
@@ -553,19 +588,14 @@ public class HomeActivity extends Activity {
                 FileWriter opticalFileWriter = new FileWriter(opticalWaveformFile, true);
                 FileWriter accelerationFileWriter = new FileWriter(accelerationWaveformFile, true);
 
-                //plot and save the filtered data
-
-                //grab current time stamp for data logging in ecg file
-                //currentTime = System.currentTimeMillis();
-                //time stamp has format: "yyyy-MM-dd HH:mm:ss.SSS"
-                //now = new Date(currentTime);
-                //strDate = sdfDate.format(now);
 
                 if (temperatureList.size() > 0){
                     for (int i = 0; i < temperatureList.size(); i++){
                         Temperature temperature = temperatureList.get(i);
                         long currentTime = temperature.getCurrentTime();
                         float value = temperature.getMeasurement();
+                        // The data values' time stamp
+                        // I don't recommend using it. It's hideous.
                         GregorianCalendar timeStamp = temperature.getTime();
 
                         //StepCount steps = stepCountList.get(i);
@@ -604,8 +634,6 @@ public class HomeActivity extends Activity {
                         strDate = sdfDate.format(now);
                         heartFileWriter.write(strDate + " ||" + heartRateValue + "||" + energyExValue + "||" + rrInterval + "\n");
                         heartRateList.remove(i);
-                        Toast toast = Toast.makeText(mContext, text, duration);
-                        toast.show();
                     }
                 }
 
@@ -633,6 +661,8 @@ public class HomeActivity extends Activity {
                         strDate = sdfDate.format(now);
                         opticalFileWriter.write(strDate + " ||" + greenValue + "||" + blueValue + "||" + "\n");
                         opticalWaveformList.remove(i);
+                        Toast toast = Toast.makeText(mContext, text, duration);
+                        toast.show();
                     }
                 }
 
@@ -644,8 +674,8 @@ public class HomeActivity extends Activity {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        opticalFileWriter.write(strDate + " ||" + accelerationValue + "||" + "\n");
-                        opticalWaveformList.remove(i);
+                        accelerationFileWriter.write(strDate + " ||" + accelerationValue + "||" + "\n");
+                        accelerationWaveformList.remove(i);
                     }
                 }
 
@@ -662,11 +692,11 @@ public class HomeActivity extends Activity {
                 Log.e(TAG, "ERROR with file manipulation or plotting!\n" + e.getMessage());
             }
 
-            samples_collected = 0; //reset buffer counter
 
         }
         //}
 
     }
+
 
 }
