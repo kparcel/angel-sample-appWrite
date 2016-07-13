@@ -168,6 +168,11 @@ public class HomeActivity extends Activity {
 
         try {
             mBleDevice.registerServiceClass(SrvWaveformSignal.class);
+            // Added these in so it would still record data to file when phone is landscape
+            mBleDevice.registerServiceClass(SrvHeartRate.class);
+            mBleDevice.registerServiceClass(SrvHealthThermometer.class);
+            mBleDevice.registerServiceClass(SrvBattery.class);
+            mBleDevice.registerServiceClass(SrvActivityMonitoring.class);
 
         } catch (NoSuchMethodException e) {
             throw new AssertionError();
@@ -219,6 +224,11 @@ public class HomeActivity extends Activity {
         public void onBluetoothServicesDiscovered(BleDevice bleDevice) {
             bleDevice.getService(SrvWaveformSignal.class).getAccelerationWaveform().enableNotifications(mAccelerationWaveformListener);
             bleDevice.getService(SrvWaveformSignal.class).getOpticalWaveform().enableNotifications(mOpticalWaveformListener);
+            // Added for recording to file when phone is landscape
+            bleDevice.getService(SrvHeartRate.class).getHeartRateMeasurement().enableNotifications(mHeartRateListener);
+            bleDevice.getService(SrvHealthThermometer.class).getTemperatureMeasurement().enableNotifications(mTemperatureListener);
+            bleDevice.getService(SrvBattery.class).getBatteryLevel().enableNotifications(mBatteryLevelListener);
+            bleDevice.getService(SrvActivityMonitoring.class).getStepCount().enableNotifications(mStepCountListener);
         }
 
         @Override
@@ -523,7 +533,6 @@ public class HomeActivity extends Activity {
     private GraphView mAccelerationWaveformView, mBlueOpticalWaveformView, mGreenOpticalWaveformView;
 
     private BleDevice mBleDevice;
-    private BleDevice mBleGraphDevice;
     private String mBleDeviceAddress;
 
     private Handler mHandler;
@@ -534,10 +543,8 @@ public class HomeActivity extends Activity {
     public Context mContext;
     /* Thread for plotting and saving data */
     public Thread mThread;
-    private boolean mConnected = false;
     private long currentTime; //timestamp for file saving
-    CharSequence text = "Wrote to File!";
-    int duration = Toast.LENGTH_LONG;
+
 
     /* Tag for LogCat purposes */
     private final static String TAG = HomeActivity.class.getSimpleName();
@@ -551,17 +558,6 @@ public class HomeActivity extends Activity {
 
             SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             sdfDate.setTimeZone(TimeZone.getDefault());
-
-            int samples_collected = 0; //initialize data buffer counter to 0
-
-            //as long as the device is connected, save values
-            // while(mConnected) {
-
-
-
-            //once buffer is full, start filtering
-            //after filtering, plot and save
-            //then clear buffer
 
             try{
 
@@ -661,8 +657,6 @@ public class HomeActivity extends Activity {
                         strDate = sdfDate.format(now);
                         opticalFileWriter.write(strDate + " ||" + greenValue + "||" + blueValue + "||" + "\n");
                         opticalWaveformList.remove(i);
-                        Toast toast = Toast.makeText(mContext, text, duration);
-                        toast.show();
                     }
                 }
 
@@ -694,7 +688,6 @@ public class HomeActivity extends Activity {
 
 
         }
-        //}
 
     }
 
