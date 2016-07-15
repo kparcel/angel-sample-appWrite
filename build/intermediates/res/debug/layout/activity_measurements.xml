@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:paddingTop="0dp"
     android:paddingBottom="2dp"
-    android:background="@drawable/ic_home_background"
+    android:background="@android:color/holo_blue_dark"
               android:id="@+id/layout_measurements">
 
     <LinearLayout
@@ -216,6 +216,20 @@
             android:textColor="@android:color/white"
             android:textStyle="bold"
             android:text="123456789g"/>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/button"
+            android:text="New Activity"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="32sp"
+            android:textColor="@android:color/holo_orange_dark"
+            android:background="@drawable/button_background"
+            android:textStyle="bold"/>
     </LinearLayout>
 
 </LinearLayout><!-- From: file:/C:/Users/Kayci/AndroidStudioProjects/WritingFiles/angel-sample-appWrite/src/main/res/layout/activity_measurements.xml -->

@@ -42,6 +42,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -72,7 +73,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-public class HomeActivity extends Activity {
+public class HomeActivity extends Activity implements View.OnClickListener {
 
     public ArrayList<Temperature> temperatureList;
     public ArrayList<StepCount> stepCountList;
@@ -86,6 +87,8 @@ public class HomeActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_measurements);
         orientation = getResources().getConfiguration().orientation;
+        activityButton = (Button) this.findViewById(R.id.button);
+        activityButton.setOnClickListener(this);
 
         mHandler = new Handler(this.getMainLooper());
         temperatureList = new ArrayList<Temperature>();
@@ -517,6 +520,74 @@ public class HomeActivity extends Activity {
         displayBatteryLevel(0);
     }
 
+
+    @Override
+    public void onClick(View v)
+    {
+        activityButton.setText("Recorded");
+
+        try{
+
+            //put angel file in Android/data/com.angel.sample_app
+            File traceFile = new File(mContext.getExternalFilesDir(null), "angelData.txt");
+            File temperatureFile = new File(mContext.getExternalFilesDir(null), "temperatureData.txt");
+            File stepsFile = new File(mContext.getExternalFilesDir(null), "stepCountFile.txt");
+            File heartFile = new File(mContext.getExternalFilesDir(null), "heartInfoFile.txt");
+            File accelMagFile = new File(mContext.getExternalFilesDir(null), "accelerationMagnitudeFile.txt");
+            File opticalWaveformFile = new File(mContext.getExternalFilesDir(null), "opticalWaveformFile.txt");
+            File accelerationWaveformFile = new File(mContext.getExternalFilesDir(null), "accelerationWaveform.txt");
+            //if the file does not already exist, create it
+            if (!traceFile.exists()){
+                traceFile.createNewFile();
+            }
+
+            Date now;
+            String strDate;
+            FileWriter angelSensorFileWriter = new FileWriter(traceFile, true /*append*/);
+            FileWriter temperatureFileWriter = new FileWriter(temperatureFile, true);
+            FileWriter stepCountFileWriter = new FileWriter(stepsFile, true);
+            FileWriter heartFileWriter = new FileWriter(heartFile, true);
+            FileWriter accelMagnitudeFileWriter = new FileWriter(accelMagFile, true);
+            FileWriter opticalFileWriter = new FileWriter(opticalWaveformFile, true);
+            FileWriter accelerationFileWriter = new FileWriter(accelerationWaveformFile, true);
+
+
+            temperatureFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+            stepCountFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+            heartFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+            accelerationFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+            opticalFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+            accelerationFileWriter.write("NEW ACTIVITY STARTED" + "\n");
+
+
+
+            temperatureFileWriter.close();
+            stepCountFileWriter.close();
+            heartFileWriter.close();
+            opticalFileWriter.close();
+            accelerationFileWriter.close();
+            accelerationFileWriter.close();
+            angelSensorFileWriter.close(); // close file writer
+
+            activityButton.setText("New Activity");
+
+        } catch (Exception e){
+            Log.e(TAG, "ERROR with file manipulation or plotting!\n" + e.getMessage());
+        }
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
     private void scheduleUpdaters() {
         mHandler.post(mPeriodicReader);
     }
@@ -529,6 +600,7 @@ public class HomeActivity extends Activity {
     private static final int ANIMATION_DURATION = 500; // Milliseconds
 
     private int orientation;
+    private Button activityButton;
 
     private GraphView mAccelerationWaveformView, mBlueOpticalWaveformView, mGreenOpticalWaveformView;
 
@@ -641,8 +713,8 @@ public class HomeActivity extends Activity {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        stepCountFileWriter.write(strDate + ", " + accelerationMagnitude + "\n");
-                        stepCountList.remove(i);
+                        accelMagnitudeFileWriter.write(strDate + ", " + accelerationMagnitude + "\n");
+                        accelerationMagnitudeList.remove(i);
                     }
                 }
 
