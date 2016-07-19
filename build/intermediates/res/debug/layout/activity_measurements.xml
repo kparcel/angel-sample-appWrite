@@ -218,18 +218,30 @@
             android:text="123456789g"/>
     </LinearLayout>
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/button"
-            android:text="New Activity"
-            android:layout_width="fill_parent"
+            android:text="Start Activity"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="32sp"
             android:textColor="@android:color/holo_orange_dark"
             android:background="@drawable/button_background"
             android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/button_stop"
+            android:text="Stop Activity"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:textSize="32sp"
+            android:textColor="@android:color/holo_orange_dark"
+            android:background="@drawable/button_background"
+            android:textStyle="bold"
+            android:onClick="onClickStop"/>
     </LinearLayout>
 
 </LinearLayout><!-- From: file:/C:/Users/Kayci/AndroidStudioProjects/WritingFiles/angel-sample-appWrite/src/main/res/layout/activity_measurements.xml -->

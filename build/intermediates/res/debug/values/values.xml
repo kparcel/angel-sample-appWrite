@@ -48,7 +48,7 @@
     <string name="scan">SCAN</string>
     <string name="scan_welcome">Welcome to Angel Sensor! Please press Angel\'s button once to re-activate Bluetooth and tap SCAN."</string>
     <string name="scanning">SCANNING...</string>
-    <string name="temperatur">Temperature</string>
+    <string name="temperature">Temperature</string>
     <string name="title_activity_home">HomeActivity</string>
     <!-- From: file:/C:/Users/Kayci/AndroidStudioProjects/WritingFiles/angel-sample-appWrite/build/intermediates/exploded-aar/angel-sample-appWrite/angel-sdk-debug/unspecified/res/values/values.xml -->
     <eat-comment/>

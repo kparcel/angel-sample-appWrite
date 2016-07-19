@@ -89,6 +89,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
         orientation = getResources().getConfiguration().orientation;
         activityButton = (Button) this.findViewById(R.id.button);
         activityButton.setOnClickListener(this);
+        stopActivityButton = (Button)this.findViewById(R.id.button_stop);
 
         mHandler = new Handler(this.getMainLooper());
         temperatureList = new ArrayList<Temperature>();
@@ -522,54 +523,66 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
 
     @Override
-    public void onClick(View v)
+    public void onClick (View v)
     {
-        activityButton.setText("Recorded");
 
         try{
 
             //put angel file in Android/data/com.angel.sample_app
-            File traceFile = new File(mContext.getExternalFilesDir(null), "angelData.txt");
-            File temperatureFile = new File(mContext.getExternalFilesDir(null), "temperatureData.txt");
-            File stepsFile = new File(mContext.getExternalFilesDir(null), "stepCountFile.txt");
-            File heartFile = new File(mContext.getExternalFilesDir(null), "heartInfoFile.txt");
-            File accelMagFile = new File(mContext.getExternalFilesDir(null), "accelerationMagnitudeFile.txt");
-            File opticalWaveformFile = new File(mContext.getExternalFilesDir(null), "opticalWaveformFile.txt");
-            File accelerationWaveformFile = new File(mContext.getExternalFilesDir(null), "accelerationWaveform.txt");
+            File actionFile = new File(mContext.getExternalFilesDir(null), "StartStopAction.txt");
+
             //if the file does not already exist, create it
-            if (!traceFile.exists()){
-                traceFile.createNewFile();
+            if (!actionFile.exists()){
+                actionFile.createNewFile();
             }
 
-            Date now;
-            String strDate;
-            FileWriter angelSensorFileWriter = new FileWriter(traceFile, true /*append*/);
-            FileWriter temperatureFileWriter = new FileWriter(temperatureFile, true);
-            FileWriter stepCountFileWriter = new FileWriter(stepsFile, true);
-            FileWriter heartFileWriter = new FileWriter(heartFile, true);
-            FileWriter accelMagnitudeFileWriter = new FileWriter(accelMagFile, true);
-            FileWriter opticalFileWriter = new FileWriter(opticalWaveformFile, true);
-            FileWriter accelerationFileWriter = new FileWriter(accelerationWaveformFile, true);
+            //Setting up timeStamp
+            SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            sdfDate.setTimeZone(TimeZone.getDefault());
+            currentTime = System.currentTimeMillis();
+            Date now = new Date(currentTime);
+            String strDate = sdfDate.format(now);
+
+            FileWriter actionFileWriter = new FileWriter(actionFile, true /*append*/);
+            // 1 for Start Activity
+            actionFileWriter.write(strDate + "     " +"1" + "\n");
+            actionFileWriter.close(); // close file writer
+
+            activityButton.setText("Start Activity");
+
+        } catch (Exception e){
+            Log.e(TAG, "ERROR with file manipulation or plotting!\n" + e.getMessage());
+        }
+
+    }
 
 
-            temperatureFileWriter.write("NEW ACTIVITY STARTED" + "\n");
-            stepCountFileWriter.write("NEW ACTIVITY STARTED" + "\n");
-            heartFileWriter.write("NEW ACTIVITY STARTED" + "\n");
-            accelerationFileWriter.write("NEW ACTIVITY STARTED" + "\n");
-            opticalFileWriter.write("NEW ACTIVITY STARTED" + "\n");
-            accelerationFileWriter.write("NEW ACTIVITY STARTED" + "\n");
 
+    public void onClickStop (View v)
+    {
 
+        try{
 
-            temperatureFileWriter.close();
-            stepCountFileWriter.close();
-            heartFileWriter.close();
-            opticalFileWriter.close();
-            accelerationFileWriter.close();
-            accelerationFileWriter.close();
-            angelSensorFileWriter.close(); // close file writer
+            //put angel file in Android/data/com.angel.sample_app
+            File actionFile = new File(mContext.getExternalFilesDir(null), "StartStopAction.txt");
 
-            activityButton.setText("New Activity");
+            //if the file does not already exist, create it
+            if (!actionFile.exists()){
+                actionFile.createNewFile();
+            }
+
+            //Setting up timeStamp
+            SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            sdfDate.setTimeZone(TimeZone.getDefault());
+            currentTime = System.currentTimeMillis();
+            Date now = new Date(currentTime);
+            String strDate = sdfDate.format(now);
+
+            FileWriter actionFileWriter = new FileWriter(actionFile, true /*append*/);
+            // 1 for Start Activity
+            actionFileWriter.write(strDate + "     " +"0" + "\n");
+            actionFileWriter.close(); // close file writer
+
 
         } catch (Exception e){
             Log.e(TAG, "ERROR with file manipulation or plotting!\n" + e.getMessage());
@@ -601,6 +614,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
     private int orientation;
     private Button activityButton;
+    private Button stopActivityButton;
 
     private GraphView mAccelerationWaveformView, mBlueOpticalWaveformView, mGreenOpticalWaveformView;
 
@@ -671,7 +685,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
                         //write time stamp and filtered value to file
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        temperatureFileWriter.write(strDate + ", " + "||" + ", " + value + ", " + "||" + ", " + "00" + "\n");
+                        temperatureFileWriter.write(strDate + "     "  + value + "\n");
                         temperatureList.remove(i);
                         //stepCountList.remove(i);
                     }
@@ -685,7 +699,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        stepCountFileWriter.write(strDate + ", " + stepValue + "\n");
+                        stepCountFileWriter.write(strDate + "     " + stepValue + "\n");
                         stepCountList.remove(i);
                     }
                 }
@@ -700,7 +714,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        heartFileWriter.write(strDate + " ||" + heartRateValue + "||" + energyExValue + "||" + rrInterval + "\n");
+                        heartFileWriter.write(strDate + "     " + heartRateValue + "\n");
                         heartRateList.remove(i);
                     }
                 }
@@ -713,7 +727,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        accelMagnitudeFileWriter.write(strDate + ", " + accelerationMagnitude + "\n");
+                        accelMagnitudeFileWriter.write(strDate + "     " + accelerationMagnitude + "\n");
                         accelerationMagnitudeList.remove(i);
                     }
                 }
@@ -727,7 +741,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        opticalFileWriter.write(strDate + " ||" + greenValue + "||" + blueValue + "||" + "\n");
+                        opticalFileWriter.write(strDate + "     " + greenValue + "     " + blueValue + "\n");
                         opticalWaveformList.remove(i);
                     }
                 }
@@ -740,7 +754,7 @@ public class HomeActivity extends Activity implements View.OnClickListener {
 
                         now = new Date(currentTime);
                         strDate = sdfDate.format(now);
-                        accelerationFileWriter.write(strDate + " ||" + accelerationValue + "||" + "\n");
+                        accelerationFileWriter.write(strDate + "     " + accelerationValue + "\n");
                         accelerationWaveformList.remove(i);
                     }
                 }

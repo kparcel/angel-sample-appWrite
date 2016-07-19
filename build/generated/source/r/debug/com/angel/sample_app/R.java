@@ -48,13 +48,14 @@ public final class R {
         public static final int ic_top_logo=0x7f020014;
     }
     public static final class id {
-        public static final int action_settings=0x7f09001e;
+        public static final int action_settings=0x7f09001f;
         public static final int button=0x7f090014;
+        public static final int button_stop=0x7f090015;
         public static final int control=0x7f090000;
         public static final int controlAction=0x7f090002;
-        public static final int graph_acceleration=0x7f090019;
-        public static final int graph_blue=0x7f090017;
-        public static final int graph_green=0x7f090015;
+        public static final int graph_acceleration=0x7f09001a;
+        public static final int graph_blue=0x7f090018;
+        public static final int graph_green=0x7f090016;
         public static final int imageview_acceleration=0x7f090012;
         public static final int imageview_battery=0x7f090009;
         public static final int imageview_heart=0x7f09000a;
@@ -63,10 +64,10 @@ public final class R {
         public static final int imageview_step_right=0x7f090010;
         public static final int imageview_thermometer_bottom=0x7f09000c;
         public static final int imageview_thermometer_top=0x7f09000d;
-        public static final int item_key=0x7f09001d;
-        public static final int item_name=0x7f09001c;
+        public static final int item_key=0x7f09001e;
+        public static final int item_name=0x7f09001d;
         public static final int layout_measurements=0x7f090005;
-        public static final int lv=0x7f09001b;
+        public static final int lv=0x7f09001c;
         public static final int sepControl=0x7f090001;
         public static final int sepControlBottom=0x7f090003;
         public static final int textView=0x7f090004;
@@ -76,9 +77,9 @@ public final class R {
         public static final int textview_signal=0x7f090006;
         public static final int textview_step_count=0x7f090011;
         public static final int textview_temperature=0x7f09000e;
-        public static final int view_line_1=0x7f090016;
-        public static final int view_line_2=0x7f090018;
-        public static final int view_line_3=0x7f09001a;
+        public static final int view_line_1=0x7f090017;
+        public static final int view_line_2=0x7f090019;
+        public static final int view_line_3=0x7f09001b;
     }
     public static final class layout {
         public static final int activity_main=0x7f030000;
@@ -111,7 +112,7 @@ public final class R {
         public static final int scan=0x7f070011;
         public static final int scan_welcome=0x7f070012;
         public static final int scanning=0x7f070013;
-        public static final int temperatur=0x7f070014;
+        public static final int temperature=0x7f070014;
         public static final int title_activity_home=0x7f070015;
         public static final int title_devices=0x7f070016;
         public static final int unknown_characteristic=0x7f070017;
